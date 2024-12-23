@@ -1,0 +1,6 @@
+**/*.rs.bk
+*.pdb
+*.wasm
+debug/
+target/
+Cargo.lock
