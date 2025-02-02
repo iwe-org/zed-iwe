@@ -37,7 +37,7 @@ impl IweExtension {
 
         let (platform, arch) = zed::current_platform();
         let asset_name = format!(
-            "iwe-{}-{}.tar.gz",
+            "{}-{}.tar.gz",
             release.version,
             match (platform, arch) {
                 (zed::Os::Linux, zed::Architecture::Aarch64) => "aarch64-unknown-linux-gnu",
