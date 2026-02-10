@@ -6,7 +6,49 @@ struct IweExtension {
     cached_binary_path: Option<String>,
 }
 
+struct PlatformInfo {
+    target_triple: &'static str,
+    archive_ext: &'static str,
+    binary_name: &'static str,
+    download_type: zed::DownloadedFileType,
+}
+
 impl IweExtension {
+    fn platform_info(platform: zed::Os, arch: zed::Architecture) -> Result<PlatformInfo> {
+        match (platform, arch) {
+            (zed::Os::Mac, _) => Ok(PlatformInfo {
+                target_triple: "universal-apple-darwin",
+                archive_ext: "tar.gz",
+                binary_name: "iwes",
+                download_type: zed::DownloadedFileType::GzipTar,
+            }),
+            (zed::Os::Linux, zed::Architecture::Aarch64) => Ok(PlatformInfo {
+                target_triple: "aarch64-unknown-linux-gnu",
+                archive_ext: "tar.gz",
+                binary_name: "iwes",
+                download_type: zed::DownloadedFileType::GzipTar,
+            }),
+            (zed::Os::Linux, zed::Architecture::X8664) => Ok(PlatformInfo {
+                target_triple: "x86_64-unknown-linux-gnu",
+                archive_ext: "tar.gz",
+                binary_name: "iwes",
+                download_type: zed::DownloadedFileType::GzipTar,
+            }),
+            (zed::Os::Windows, zed::Architecture::X8664) => Ok(PlatformInfo {
+                target_triple: "x86_64-pc-windows-msvc",
+                archive_ext: "zip",
+                binary_name: "iwes.exe",
+                download_type: zed::DownloadedFileType::Zip,
+            }),
+            (zed::Os::Windows, arch) => {
+                Err(format!("Windows {:?} is not yet supported", arch))
+            }
+            (platform, arch) => {
+                Err(format!("Unsupported platform: {:?} {:?}", platform, arch))
+            }
+        }
+    }
+
     fn language_server_binary_path(
         &mut self,
         language_server_id: &zed::LanguageServerId,
@@ -36,16 +78,13 @@ impl IweExtension {
         )?;
 
         let (platform, arch) = zed::current_platform();
+        let info = Self::platform_info(platform, arch)?;
+
         let asset_name = format!(
-            "{}-{}.tar.gz",
+            "iwe-{}-{}.{}",
             release.version,
-            match (platform, arch) {
-                (zed::Os::Linux, zed::Architecture::Aarch64) => "aarch64-unknown-linux-gnu",
-                (zed::Os::Linux, zed::Architecture::X8664) => "x86_64-unknown-linux-gnu",
-                (zed::Os::Mac, _) => "universal-apple-darwin",
-                (zed::Os::Windows, _) => todo!("winows not supported at the moment"),
-                _ => todo!("unsupported platform"),
-            }
+            info.target_triple,
+            info.archive_ext,
         );
 
         let asset = release
@@ -57,29 +96,27 @@ impl IweExtension {
         let version_dir = format!("iwe-{}", release.version);
         fs::create_dir_all(&version_dir).map_err(|e| format!("create directory failure: {e}"))?;
 
-        let archive_path = format!("{version_dir}/release.tar.gz");
-        let binary_path = format!("{version_dir}/release.tar.gz/iwes");
+        let archive_path = format!("{version_dir}/release.{}", info.archive_ext);
+        let binary_path = format!("{version_dir}/{}", info.binary_name);
 
-        if !fs::metadata(&archive_path).map_or(false, |stat| stat.is_file()) {
+        if !fs::metadata(&binary_path).map_or(false, |stat| stat.is_file()) {
             zed::set_language_server_installation_status(
                 language_server_id,
                 &zed::LanguageServerInstallationStatus::Downloading,
             );
 
-            zed::download_file(
-                &asset.download_url,
-                &archive_path,
-                zed::DownloadedFileType::GzipTar,
-            )
-            .map_err(|e| format!("file download failure: {e}"))?;
+            zed::download_file(&asset.download_url, &archive_path, info.download_type)
+                .map_err(|e| format!("file download failure: {e}"))?;
 
-            zed::make_file_executable(&binary_path)?;
+            if platform != zed::Os::Windows {
+                zed::make_file_executable(&binary_path)?;
+            }
 
             let entries =
                 fs::read_dir(".").map_err(|e| format!("reading directory failure {e}"))?;
             for entry in entries {
                 let entry =
-                    entry.map_err(|e| format!("directory entry etntry read failure {e}"))?;
+                    entry.map_err(|e| format!("directory entry read failure {e}"))?;
                 if entry.file_name().to_str() != Some(&version_dir) {
                     fs::remove_dir_all(entry.path()).ok();
                 }
