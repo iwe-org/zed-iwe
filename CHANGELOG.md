@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Windows support (x86_64)
+
+### Fixed
+
+- Asset name format now correctly includes `iwe-` prefix
+- Binary path after extraction no longer references archive filename
+- Unsupported platforms now return proper error messages instead of panicking
+
 ## [0.0.1] - 2024-04-24
 
 Initial release
