@@ -81,7 +81,7 @@ impl IweExtension {
         let info = Self::platform_info(platform, arch)?;
 
         let asset_name = format!(
-            "iwe-{}-{}.{}",
+            "{}-{}.{}",
             release.version,
             info.target_triple,
             info.archive_ext,
@@ -108,9 +108,7 @@ impl IweExtension {
             zed::download_file(&asset.download_url, &archive_path, info.download_type)
                 .map_err(|e| format!("file download failure: {e}"))?;
 
-            if platform != zed::Os::Windows {
-                zed::make_file_executable(&binary_path)?;
-            }
+            zed::make_file_executable(&binary_path)?;
 
             let entries =
                 fs::read_dir(".").map_err(|e| format!("reading directory failure {e}"))?;
