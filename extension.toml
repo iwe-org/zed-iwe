@@ -1,7 +1,7 @@
 id = "iwe"
 name = "IWE"
 description = "Markdown files graph navigation and transformation"
-version = "0.0.4"
+version = "0.0.5"
 schema_version = 1
 authors = ["Dmytro Halichenko <dmytrohalichenko@gmail.com>"]
 repository = "https://github.com/iwe-org/zed-iwe"

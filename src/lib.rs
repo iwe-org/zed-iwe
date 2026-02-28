@@ -93,10 +93,9 @@ impl IweExtension {
             .find(|asset| asset.name == asset_name)
             .ok_or_else(|| format!("no asset found matching {:?}", asset_name))?;
 
-        let version_dir = format!("iwe-{}", release.version);
+        let version_dir = release.version.clone();
         fs::create_dir_all(&version_dir).map_err(|e| format!("create directory failure: {e}"))?;
 
-        let archive_path = format!("{version_dir}/release.{}", info.archive_ext);
         let binary_path = format!("{version_dir}/{}", info.binary_name);
 
         if !fs::metadata(&binary_path).map_or(false, |stat| stat.is_file()) {
@@ -105,7 +104,7 @@ impl IweExtension {
                 &zed::LanguageServerInstallationStatus::Downloading,
             );
 
-            zed::download_file(&asset.download_url, &archive_path, info.download_type)
+            zed::download_file(&asset.download_url, &version_dir, info.download_type)
                 .map_err(|e| format!("file download failure: {e}"))?;
 
             zed::make_file_executable(&binary_path)?;
