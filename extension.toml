@@ -1,6 +1,6 @@
 id = "iwe"
 name = "IWE"
-description = "Markdown files graph navigation and transformation"
+description = "IWE (iwe.md): Markdown knowledge base with links, backlinks, search and refactoring"
 version = "0.0.5"
 schema_version = 1
 authors = ["Dmytro Halichenko <dmytrohalichenko@gmail.com>"]
